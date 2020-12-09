@@ -1,0 +1,39 @@
+
+body {
+  background: #333;
+  color: white;
+  font-family: 'VT323', monospace;
+}
+
+a:hover {
+  color: #333;
+}
+
+a, a:visited {
+  color: #999;
+  text-decoration: none;
+}
+
+a:hover {
+  color: white;
+}
+
+.site-wrapper {
+  width: 550px;
+  margin: auto;
+  padding: 10px;
+}
+
+h1 {
+  font-size: 5em;
+  text-transform: uppercase;
+}
+
+.h1-emph {
+  color: red;
+  animation:blinkingText 1.2s 2;
+}
+
+h2 {
+  text-transform: uppercase;
+}

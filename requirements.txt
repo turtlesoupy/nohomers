@@ -1,0 +1,4 @@
+aioapns>=1.12
+aiohttp>=3.7.3
+aiohttp-jinja2>=1.4.0
+pydash>=4.9.0
