@@ -9,6 +9,8 @@ import pydash as py_
 import copy
 import uuid
 import logging
+from pathlib import Path
+from dataclasses import dataclass
 
 
 def json_error(klass, error_type, message=None):
@@ -24,6 +26,24 @@ def json_response(dict):
         content_type="application/json",
     )
 
+@dataclass
+class ContentItem:
+    url: str
+
+class ContentIndex:
+    def __init__(self, manifest_path: Path, images_base: str):
+        with open(manifest_path, "r") as f:
+            self.manifest = json.load(f)
+
+        self.images_base = images_base
+    
+    def random_item(self):
+        item = py_.sample(self.manifest)
+        return ContentItem(
+            url=f"{self.images_base}/{item['image_name']}"
+        )
+    
+
 
 class Handlers:
     @property
@@ -32,8 +52,8 @@ class Handlers:
             web.get("/", self.index),
         ]
 
-    def __init__(self):
-        pass
+    def __init__(self, content_index):
+        self.content_index = content_index
 
     async def on_startup(self, app):
         pass
@@ -43,4 +63,7 @@ class Handlers:
 
     @aiohttp_jinja2.template("index.jinja2")
     async def index(self, request):
-        return {}
+        display_item = self.content_index.random_item()
+        return {
+            "display_item": display_item,
+        }

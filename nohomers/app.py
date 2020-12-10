@@ -5,12 +5,16 @@ from aiohttp import web
 from pathlib import Path
 from urllib.parse import quote_plus
 import logging
-from .handlers import Handlers
+from .handlers import Handlers, ContentIndex
 
 
 def _dev_handlers():
     logging.basicConfig(level=logging.INFO)
-    return Handlers()
+    content_index = ContentIndex(
+        manifest_path=Path(__file__).parent.parent / "static" / "dev_index" / "manifest.json",
+        images_base="/static/dev_index/images",
+    )
+    return Handlers(content_index=content_index)
 
 
 def app(handlers=None):
