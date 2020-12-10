@@ -6,13 +6,15 @@
   <title>This Fucked Up Homer Does Not Exist</title>
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/bundle.css">
+  <script type="text/javascript">var currentContentItem = {{display_item.json_string | safe}};</script>
   <script async type="text/javascript" src="/static/bundle.js"></script>
 </head>
 
 <body>
     <div class="site-wrapper">
         <div id="payload-zone" class="payload-zone">
-          <img src="{{display_item.url}}" class="image-payload">
+          <img src="{{display_item.url}}" class="image-payload" id="image-payload">
+          <video src="{{display_item.transition_url}}" class="transition-video-payload" id="transition-video-payload" style="display: none;">
         </div>
 
         <div class="attribution">
@@ -33,6 +35,7 @@
                 You can <a href="https://www.buymeacoffee.com/turtlesoupy">buy me a coffee</a>
             </div>
             <div class="attribution-section"> 
+              <a href="/" id="next-button">Next</a>
               <img 
                   class="tweet-button" 
                   srcset="/static/tweet_button.png, /static/tweet_button@2x.png 2x"

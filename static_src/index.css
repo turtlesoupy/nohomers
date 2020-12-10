@@ -66,6 +66,14 @@ a.darken:hover img {
   object-fit: contain;
 }
 
+.transition-video-payload {
+  max-width:100vw;
+  max-height:100vh;
+  height: 100vh;
+  object-fit: contain;
+}
+
+
 .attribution {
    font-size: small;
    width: 100%;

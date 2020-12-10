@@ -32,6 +32,6 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "tslib": "^2.0.1",
-    "whatwg-fetch": "^3.0.0"
+    "whatwg-fetch": "^3.5.0"
   }
 }
