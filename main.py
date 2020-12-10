@@ -48,7 +48,7 @@ if __name__ == "__main__":
         action=EnvDefault,
         env_var="MANIFEST_DIR_URL",
         help="HTTP(s) path for manifest dir",
-        default="//static.thisfuckeduphomerdoesnotexist.com/dev-index",
+        default="//static.thisfuckeduphomerdoesnotexist.com/dev_index",
     )
 
     args = parser.parse_args()
