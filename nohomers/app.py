@@ -12,7 +12,7 @@ def _dev_handlers():
     logging.basicConfig(level=logging.INFO)
     content_index = ContentIndex(
         manifest_path=Path(__file__).parent.parent / "static" / "dev_index" / "manifest.json",
-        images_base="/static/dev_index/images",
+        manifest_dir_url="/static/dev_index",
     )
     return Handlers(content_index=content_index)
 

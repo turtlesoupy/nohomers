@@ -31,16 +31,16 @@ class ContentItem:
     url: str
 
 class ContentIndex:
-    def __init__(self, manifest_path: Path, images_base: str):
+    def __init__(self, manifest_path: Path, manifest_dir_url: str):
         with open(manifest_path, "r") as f:
             self.manifest = json.load(f)
 
-        self.images_base = images_base
+        self.manifest_dir_url = manifest_dir_url
     
     def random_item(self):
         item = py_.sample(self.manifest)
         return ContentItem(
-            url=f"{self.images_base}/{item['image_name']}"
+            url=f"{self.manifest_dir_url}/images/{item['image_name']}"
         )
     
 
