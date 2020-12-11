@@ -3,6 +3,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>This Fucked Up Homer Does Not Exist</title>
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/bundle.css">
@@ -14,7 +16,11 @@
     <div class="site-wrapper">
         <div id="payload-zone" class="payload-zone">
           <img src="{{display_item.url}}" class="image-payload" id="image-payload">
-          <video src="{{display_item.transition_url}}" class="transition-video-payload" id="transition-video-payload" style="display: none;">
+          <video 
+            playsinline   
+            src="{{display_item.transition_url}}" class="transition-video-payload" 
+            id="transition-video-payload" style="display: none;"
+          >
         </div>
 
         <div class="attribution">
