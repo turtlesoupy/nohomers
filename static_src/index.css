@@ -59,15 +59,26 @@ a.disabled, a.disabled:visited, a.disabled:hover {
   max-width:100vw;
   max-height:100vh;
   object-fit: contain;
+  position: absolute;
+  left: 50%;
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+  z-index: 1;
 }
 
 .transition-video-payload {
   max-width:100vw;
   max-height:100vh;
   object-fit: contain;
+  position: absolute;
+  left: 50%;
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+  z-index: 0;
 }
 
 .attribution-wrapper {
+    z-index: 2;
    width: 100%;
    position: fixed;
    bottom: 0;
@@ -93,26 +104,33 @@ a.disabled, a.disabled:visited, a.disabled:hover {
 @media (orientation: portrait) {
     .site-wrapper {
         margin: 0;
-        position: absolute;
-        top: 50%;
-        -ms-transform: translateY(-50%);
-        transform: translateY(-50%);
     }
     .attribution-wrapper {
-        position: relative;
-        bottom: none;
+        position: absolute;
+        bottom: 0;
         padding-top: 1em;
         text-align: left;
         width: fit-content;
         margin: 0 auto;
+        left: 50%;
+        -ms-transform: translateX(-50%);
+        transform: translateX(-50%);
     }
 
     .image-payload {
         width: 100vw;
+        left: 0%;
+        top: 40%;
+        -ms-transform: translateY(-40%);
+        transform: translateY(-40%);
     }
 
     .transition-video-payload {
         width: 100vw;
+        left: 0%;
+        top: 40%;
+        -ms-transform: translateY(-40%);
+        transform: translateY(-40%);
     }
 }
 

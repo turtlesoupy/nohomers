@@ -43,40 +43,40 @@ window.addEventListener('load', (event) => {
 
     function assignNext() {
         payloadImage.setAttribute("src", image.src);
-        payloadImage.style.display = "";
-        payloadTransitionVideo.style.display = "none";
+        payloadImage.style.zIndex = "1";
+        payloadTransitionVideo.style.zIndex = "0";
 
-        window.fetch(`/item/${currentContentItem.next_item_key}`)
-            .then(res => res.json())
-            .then(json => {
-                if (!json.url) {
-                    console.error("Bad response!")
+        setTimeout(function() {
+            window.fetch(`/item/${currentContentItem.next_item_key}`)
+                .then(res => res.json())
+                .then(json => {
+                    if (!json.url) {
+                        console.error("Bad response!")
+                        nextButton.disabled = false;
+                        nextButton.classList.remove("disabled");
+                        return;
+                    }
+
+                    history.pushState({
+                        contentItem: currentContentItem
+                    }, "", currentContentItem.permalink);
+                    syncToContentItem(json as ContentItem);
+
                     nextButton.disabled = false;
                     nextButton.classList.remove("disabled");
-                    return;
-                }
-
-                syncToContentItem(json as ContentItem);
-                history.pushState({
-                    contentItem: currentContentItem
-                }, "", currentContentItem.permalink);
-
-                syncToContentItem(currentContentItem);
-
-                nextButton.disabled = false;
-                nextButton.classList.remove("disabled");
-            })
-            .catch((error) => {
-                console.log(error);
-                nextButton.disabled = false;
-                nextButton.classList.remove("disabled");
-            });
+                })
+                .catch((error) => {
+                    console.log(error);
+                    nextButton.disabled = false;
+                    nextButton.classList.remove("disabled");
+                });
+        }, 50);
 
     }
 
     function doTransition() {
-        payloadImage.style.display = "none";
-        payloadTransitionVideo.style.display = "";
+        payloadImage.style.zIndex = "0";
+        payloadTransitionVideo.style.zIndex = "1";
         nextButton.disabled = true;
         nextButton.classList.add("disabled");
 
