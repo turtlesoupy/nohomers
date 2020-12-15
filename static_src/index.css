@@ -27,9 +27,7 @@ a.disabled, a.disabled:visited, a.disabled:hover {
 }
 
 .next-button {
-   font-size: large;
-   text-align: right;
-   font-weight: bold;
+   font-size: medium;
 }
 
 .site-wrapper {

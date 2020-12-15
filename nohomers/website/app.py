@@ -5,6 +5,7 @@ from aiohttp import web
 from pathlib import Path
 from urllib.parse import quote_plus
 import logging
+from aiohttp.web import middleware
 from .handlers import Handlers, ContentIndex
 
 
@@ -20,11 +21,20 @@ def _dev_handlers():
     )
 
 
+@middleware
+async def add_www_to_url(request, handler):
+    if request.url.host == "thisfuckeduphomerdoesnotexist.com":
+        request.url.host = f"www.{request.url.host}"
+        raise web.HTTPFound(location=request.url)
+
+    return (await handler(request))
+
+
 def app(handlers=None):
     handlers = handlers or _dev_handlers()
 
     my_app = web.Application(
-        middlewares=[]
+        middlewares=[add_www_to_url]
     )
     my_app.on_startup.append(handlers.on_startup)
     my_app.on_cleanup.append(handlers.on_cleanup)

@@ -66,6 +66,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=lvl)
 
     content_index = ContentIndex(args.manifest_path, args.manifest_dir_url)
-    handlers = Handlers(content_index=content_index)
+    handlers = Handlers(content_index=content_index, base_url=args.base_url)
     my_app = app(handlers)
     web.run_app(app(handlers), port=args.port)
