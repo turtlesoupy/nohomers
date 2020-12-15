@@ -12,6 +12,7 @@ interface ContentItem {
 }
 
 declare var currentContentItem: ContentItem;
+declare var isRootRequest: boolean;
 
 window.addEventListener('load', (event) => {
     let transitionAfter = 7500;
@@ -59,7 +60,7 @@ window.addEventListener('load', (event) => {
 
                     history.pushState({
                         contentItem: currentContentItem
-                    }, "", currentContentItem.permalink);
+                    }, "", isRootRequest ? undefined : currentContentItem.permalink);
                     syncToContentItem(json as ContentItem);
 
                     nextButton.disabled = false;

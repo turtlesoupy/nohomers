@@ -24,7 +24,7 @@
   <meta name="twitter:creator" content="@turtlesoupy">
   <meta name="twitter:image" content="{{og_image_url}}">
 
-  <script type="text/javascript">var currentContentItem = {{display_item.json_string | safe}};</script>
+  <script type="text/javascript">var currentContentItem = {{display_item.json_string | safe}}; var isRootRequest = {{"true" if is_root_request else "false"}}; </script>
   <script async type="text/javascript" src="/static/bundle.js?4"></script>
   <script async type="text/javascript" src="https://platform.twitter.com/widgets.js"></script>
 </head>
