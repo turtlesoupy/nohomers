@@ -26,6 +26,12 @@ a.disabled, a.disabled:visited, a.disabled:hover {
     color: rgba(0, 0, 0, 0.5);
 }
 
+.next-button {
+   font-size: large;
+   text-align: right;
+   font-weight: bold;
+}
+
 .site-wrapper {
     /* width: 550px;
     margin: auto;

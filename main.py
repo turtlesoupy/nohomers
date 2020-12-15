@@ -2,8 +2,8 @@ from aioapns import APNs
 from aiohttp import web
 import argparse
 import logging
-from nohomers.app import app
-from nohomers.handlers import Handlers, ContentIndex
+from nohomers.website.app import app
+from nohomers.website.handlers import Handlers, ContentIndex
 import os
 from pathlib import Path
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         action=EnvDefault,
         env_var="MANIFEST_DIR_URL",
         help="HTTP(s) path for manifest dir",
-        default="//static.thisfuckeduphomerdoesnotexist.com/dev_index",
+        default="//static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augnormal04",
     )
 
     args = parser.parse_args()

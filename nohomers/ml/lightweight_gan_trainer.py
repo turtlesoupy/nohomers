@@ -50,9 +50,9 @@ class GeneratedTransition:
 
     def to_dict(self):
         return {
-            "dest_index": dst_i,
-            "dest_name": dst["image_name"],
-            "video_name": str(video_name),
+            "dest_index": self.dest_index,
+            "dest_name": self.dest_name,
+            "video_name": self.video_name,
         }
 
     @classmethod
@@ -61,7 +61,6 @@ class GeneratedTransition:
             dest_index=d["dest_index"],
             dest_name=d["image_name"],
             video_name=d["image_name"],
-
         )
 
 
@@ -73,14 +72,14 @@ class GeneratedRefWithTransitions:
     def to_dict(self):
         return {
             "name": self.name,
-            "latent": self.latents.tolist(),
+            "transitions": [e.to_dict() for e in self.transitions],
         }
 
     @classmethod
     def from_dict(cls, d):
         return cls(
             name=d["image_name"],
-            latents=np.array(d["latent"])
+            transitions=[GeneratedTransition.from_dict(e) for e in d["transitions"]],
         )
 
 

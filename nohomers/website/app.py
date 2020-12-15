@@ -11,8 +11,8 @@ from .handlers import Handlers, ContentIndex
 def _dev_handlers():
     logging.basicConfig(level=logging.INFO)
     content_index = ContentIndex(
-        manifest_path=Path(__file__).parent.parent / "static" / "dev_index" / "manifest.json",
-        manifest_dir_url="/static/dev_index",
+        manifest_path=Path(__file__).parent.parent.parent / "static" / "manifest.json",
+        manifest_dir_url="//static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augnormal04",
     )
     return Handlers(content_index=content_index)
 
@@ -26,7 +26,7 @@ def app(handlers=None):
     my_app.on_startup.append(handlers.on_startup)
     my_app.on_cleanup.append(handlers.on_cleanup)
 
-    root_path = Path(__file__).parent
+    root_path = Path(__file__).parent.parent
     my_app.add_routes(handlers.routes + [
         web.static("/static", str(root_path / "../static"))
     ])

@@ -57,7 +57,7 @@ class ContentIndex:
 
         self.manifest_dir_url = manifest_dir_url
         self.manifest_by_key = {
-            e["image_name"]: i for i, e in enumerate(self.manifest)
+            e["name"]: i for i, e in enumerate(self.manifest)
         }
 
     def _content_item_from_manifest_val(self, item: Dict[str, Any]) -> ContentItem:
@@ -67,8 +67,8 @@ class ContentIndex:
         transition_url = f"{self.manifest_dir_url}/videos/{transition['video_name']}"
 
         return ContentItem(
-            url=f"{self.manifest_dir_url}/images/{item['image_name']}",
-            key=item["image_name"],
+            url=f"{self.manifest_dir_url}/images/{item['name']}",
+            key=item["name"],
             next_item_key=next_item_key,
             next_item_url=next_item_url,
             transition_url=transition_url,
@@ -87,6 +87,7 @@ class Handlers:
     def routes(self):
         return [
             web.get("/", self.index),
+            web.get("/favicon.ico", self.favicon),
             web.get(r"/item/{key:[^/]+}", self.item),
         ]
 
@@ -107,6 +108,10 @@ class Handlers:
             return json_error(web.HTTPBadRequest, "bad_key")
         
         return json_response(item.to_dict())
+
+    async def favicon(self, request):
+        return web.FileResponse("./static/favicons/favicon.ico")
+
 
     @aiohttp_jinja2.template("index.jinja2")
     async def index(self, request):
