@@ -58,10 +58,10 @@ window.addEventListener('load', (event) => {
                         return;
                     }
 
+                    syncToContentItem(json as ContentItem);
                     history.pushState({
                         contentItem: currentContentItem
                     }, "", isRootRequest ? undefined : currentContentItem.permalink);
-                    syncToContentItem(json as ContentItem);
 
                     nextButton.disabled = false;
                     nextButton.classList.remove("disabled");
