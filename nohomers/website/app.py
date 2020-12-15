@@ -7,6 +7,7 @@ from urllib.parse import quote_plus
 import logging
 from aiohttp.web import middleware
 from .handlers import Handlers, ContentIndex
+import copy
 
 
 def _dev_handlers():
@@ -24,8 +25,7 @@ def _dev_handlers():
 @middleware
 async def add_www_to_url(request, handler):
     if request.url.host == "thisfuckeduphomerdoesnotexist.com":
-        request.url.host = f"www.{request.url.host}"
-        raise web.HTTPFound(location=request.url)
+        raise web.HTTPFound(location=str(request.url).replace("://", "://www."))
 
     return (await handler(request))
 
