@@ -12,9 +12,12 @@ def _dev_handlers():
     logging.basicConfig(level=logging.INFO)
     content_index = ContentIndex(
         manifest_path=Path(__file__).parent.parent.parent / "static" / "manifest.json",
-        manifest_dir_url="//static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augnormal04",
+        manifest_dir_url="https://static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augnormal04",
     )
-    return Handlers(content_index=content_index)
+    return Handlers(
+        content_index=content_index,
+        base_url="https://www.thisfuckeduphomerdoesnotexist.com",
+    )
 
 
 def app(handlers=None):

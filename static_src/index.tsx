@@ -7,13 +7,14 @@ interface ContentItem {
     key: string,
     next_item_key: string,
     next_item_url: string,
-    transition_url: string
+    transition_url: string,
+    permalink: string,
 }
 
 declare var currentContentItem: ContentItem;
 
 window.addEventListener('load', (event) => {
-    let transitionAfter = 10000;
+    let transitionAfter = 7500;
     let image = new Image();
     image.src = currentContentItem.next_item_url;
 
@@ -22,6 +23,23 @@ window.addEventListener('load', (event) => {
     payloadTransitionVideo.load();
 
     var nextButton = document.getElementById("next-button") as HTMLLinkElement;
+    var imageLink = document.getElementById("display-link") as HTMLLinkElement;
+    var copyElement = document.getElementById("copy-a") as HTMLLinkElement;
+    var twitterElement = document.getElementById("tweet-a") as HTMLLinkElement;
+
+    copyElement.setAttribute("href", currentContentItem.permalink);
+
+    function syncToContentItem(ci: ContentItem) {
+        currentContentItem = ci;
+        payloadImage.setAttribute("src", ci.url);
+        image.src = ci.next_item_url;                    
+        payloadTransitionVideo.src = ci.transition_url;
+        payloadTransitionVideo.load();
+        copyElement.setAttribute("href", ci.permalink);
+        twitterElement.setAttribute("href",
+            `https://twitter.com/intent/tweet?url=${encodeURIComponent(copyElement.href)}`
+        );
+    }
 
     function assignNext() {
         payloadImage.setAttribute("src", image.src);
@@ -38,12 +56,13 @@ window.addEventListener('load', (event) => {
                     return;
                 }
 
-                var item = json as ContentItem;
-                currentContentItem = item;
+                syncToContentItem(json as ContentItem);
+                history.pushState({
+                    contentItem: currentContentItem
+                }, "", currentContentItem.permalink);
 
-                image.src = item.next_item_url;                    
-                payloadTransitionVideo.src = item.transition_url;
-                payloadTransitionVideo.load();
+                syncToContentItem(currentContentItem);
+
                 nextButton.disabled = false;
                 nextButton.classList.remove("disabled");
             })
@@ -61,13 +80,21 @@ window.addEventListener('load', (event) => {
         nextButton.disabled = true;
         nextButton.classList.add("disabled");
 
-        if (payloadTransitionVideo.readyState != 4) {
-            assignNext();
-        } else {
-            payloadTransitionVideo.play();
-            payloadTransitionVideo.onended = (e) => {
+        function handleTransition() {
+            if (payloadTransitionVideo.readyState != 4) {
                 assignNext();
-            };
+            } else {
+                payloadTransitionVideo.play();
+                payloadTransitionVideo.onended = (e) => {
+                    assignNext();
+                };
+            }
+        }
+
+        if (payloadTransitionVideo.readyState != 4) {
+            setTimeout(handleTransition, 500);
+        } else {
+            handleTransition();
         }
     }
 
@@ -78,12 +105,38 @@ window.addEventListener('load', (event) => {
         }
     }, transitionAfter);
 
-    nextButton.addEventListener("click", (e) => {
-        e.preventDefault();
+    
+    function userInitiatedTransition() {
         allowIdleTransition = false;
+        clearInterval(idleInterval);
         if (!nextButton.disabled) {
             doTransition();
         }
+    }
+
+    nextButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        userInitiatedTransition();
+    });
+    imageLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        userInitiatedTransition();
     });
 
+    copyElement.addEventListener("click", (e) => {
+        e.preventDefault();
+        var copyText = copyElement.href;
+
+        document.addEventListener('copy', function(e) {
+            e.clipboardData.setData('text/plain', copyText);
+            e.preventDefault();
+        }, true);
+
+        document.execCommand('copy');  
+    });
+
+    window.addEventListener("popstate", (e) => {
+        console.log(e.state.contentItem);
+        syncToContentItem(e.state.contentItem);
+    });
 });

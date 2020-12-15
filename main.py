@@ -39,7 +39,7 @@ if __name__ == "__main__":
         action=EnvDefault,
         env_var="MANIFEST_PATH",
         help="Manifest path location",
-        default="./resources/prod_manifest.json",
+        default="./static/manifest.json",
     )
 
     parser.add_argument(
@@ -48,7 +48,16 @@ if __name__ == "__main__":
         action=EnvDefault,
         env_var="MANIFEST_DIR_URL",
         help="HTTP(s) path for manifest dir",
-        default="//static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augnormal04",
+        default="https://static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augnormal04",
+    )
+
+    parser.add_argument(
+        "--base-url",
+        type=str,
+        action=EnvDefault,
+        env_var="BASE_URL",
+        help="The absolute base url for certain callback links",
+        default="https://www.thisfuckeduphomerdoesnotexist.com",
     )
 
     args = parser.parse_args()
