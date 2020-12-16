@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+from threading import BoundedSemaphore
 from tqdm.auto import tqdm
 import torch
 import json
@@ -249,6 +251,34 @@ def gen_images_and_manifest(trainer, output_base_dir, num=10, batch_size=100, cl
     return image_objects[:num]
 
 
+class BoundedExecutor:
+    """BoundedExecutor behaves as a ThreadPoolExecutor which will block on
+    calls to submit() once the limit given as "bound" work items are queued for
+    execution.
+    :param bound: Integer - the maximum number of items in the work queue
+    :param max_workers: Integer - the size of the thread pool
+    """
+    def __init__(self, bound, max_workers):
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.semaphore = BoundedSemaphore(bound + max_workers)
+
+    """See concurrent.futures.Executor#submit"""
+    def submit(self, fn, *args, **kwargs):
+        self.semaphore.acquire()
+        try:
+            future = self.executor.submit(fn, *args, **kwargs)
+        except:
+            self.semaphore.release()
+            raise
+        else:
+            future.add_done_callback(lambda x: self.semaphore.release())
+            return future
+
+    """See concurrent.futures.Executor#shutdown"""
+    def shutdown(self, wait=True):
+        self.executor.shutdown(wait)
+
+
 def gen_interpolation_videos(
     trainer, 
     images: List[GeneratedRef], 
@@ -266,6 +296,7 @@ def gen_interpolation_videos(
     videos_path.mkdir(exist_ok=True)
 
     ret = []
+    executor = BoundedExecutor(16, 32)
     for src_i, src in enumerate(tqdm(images)):
         dest_set = set()
         while len(dest_set) < per_edge:
@@ -291,7 +322,14 @@ def gen_interpolation_videos(
                 batch_size=batch_size,
             )
             
-            frames_to_video(video_frames, output_path=videos_path / video_name, fps=video_fps, bitrate="1M")
+            executor.submit(
+                frames_to_video,
+                frames=video_frames,
+                output_path=videos_path / video_name, 
+                fps=video_fps, 
+                bitrate="1M"
+            )
+            # frames_to_video(video_frames, output_path=videos_path / video_name, fps=video_fps, bitrate="1M")
             
             transitions.append(
                 GeneratedTransition(
@@ -305,5 +343,7 @@ def gen_interpolation_videos(
             name=src.name,
             transitions=transitions,
         ))
+
+    executor.shutdown(wait=True)
             
     return ret

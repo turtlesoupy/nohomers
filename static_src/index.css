@@ -53,6 +53,7 @@ a.disabled, a.disabled:visited, a.disabled:hover {
   text-align: center;
   margin: 0;
   padding: 0;
+  filter: contrast(120%) brightness(100%);
 }
 
 .image-payload {

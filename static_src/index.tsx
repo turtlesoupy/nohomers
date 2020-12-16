@@ -81,8 +81,14 @@ window.addEventListener('load', (event) => {
         nextButton.disabled = true;
         nextButton.classList.add("disabled");
 
+        var maxWait = 1000;
+        var intervalTime = 100;
+        var totalWait = [0]
         function handleTransition() {
-            if (payloadTransitionVideo.readyState != 4) {
+            if (payloadTransitionVideo.readyState != 4 && totalWait[0] < maxWait) {
+                totalWait[0] += intervalTime;
+                setTimeout(handleTransition, intervalTime);
+            } else if (payloadTransitionVideo.readyState != 4) {
                 assignNext();
             } else {
                 payloadTransitionVideo.play();
@@ -92,11 +98,7 @@ window.addEventListener('load', (event) => {
             }
         }
 
-        if (payloadTransitionVideo.readyState != 4) {
-            setTimeout(handleTransition, 500);
-        } else {
-            handleTransition();
-        }
+        handleTransition();
     }
 
     var allowIdleTransition = true;
