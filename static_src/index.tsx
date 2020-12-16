@@ -124,18 +124,6 @@ window.addEventListener('load', (event) => {
         userInitiatedTransition();
     });
 
-    copyElement.addEventListener("click", (e) => {
-        e.preventDefault();
-        var copyText = copyElement.href;
-
-        document.addEventListener('copy', function(e) {
-            e.clipboardData.setData('text/plain', copyText);
-            e.preventDefault();
-        }, true);
-
-        document.execCommand('copy');  
-    });
-
     window.addEventListener("popstate", (e) => {
         console.log(e.state.contentItem);
         syncToContentItem(e.state.contentItem);

@@ -27,6 +27,16 @@
   <script type="text/javascript">var currentContentItem = {{display_item.json_string | safe}}; var isRootRequest = {{"true" if is_root_request else "false"}}; </script>
   <script async type="text/javascript" src="/static/bundle.js?5"></script>
   <script async type="text/javascript" src="https://platform.twitter.com/widgets.js"></script>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-85FKC8XB8E"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-85FKC8XB8E');
+  </script>
 </head>
 
 <body>
@@ -74,7 +84,7 @@
                       alt="Tweet Button">
                 </a>
                 &middot;
-                <a id="copy-a" class="copy-a" href="{{og_url}}"> Copy Link </a>
+                <a id="copy-a" class="copy-a" href="{{og_url}}"> Direct Link </a>
               </div>
           </div>
         </div>
