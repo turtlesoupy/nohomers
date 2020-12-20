@@ -5,16 +5,33 @@ from PIL import Image
 from torch.utils.data.dataloader import default_collate
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+import torch
 
 
 @dataclass
 class SimpleVisionExample:
     path: Path
-    label: int
+    label: Optional[int]
+    latent: Optional[torch.Tensor]
 
     def hash_str(self, salt):
         return int(hashlib.md5(f"{salt}{str(self.path)}".encode("utf-8")).hexdigest(), 16)
+
+    def to_dict(self):
+        return {
+            "path": str(self.path),
+            "label": self.label,
+            "latent": self.latent.numpy().tolist(),
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            path=Path(d["path"]),
+            label=d["label"],
+            latent=torch.tensor(np.array(d["latent"], dtype=np.float), dtype=torch.float),
+        )
 
 
 def _split_range(splits, split_idx):
@@ -87,15 +104,16 @@ class SimpleVisionDataset(datasets.VisionDataset):
         img = pil_loader(row.path, self.mode)
         if self.transform is not None:
             img = self.transform(img)
-
-        return img, row.label
+        
+        return img, row.latent, row.label
 
     @property
     def collate_fn(self):
         def collate(batch):
-            return (
-                default_collate([e[0] for e in batch]),
-                default_collate([e[1] for e in batch])
+            bl = len(batch[0])
+            return tuple(
+                default_collate([e[i] for e in batch])
+                for i in range(bl)
             )
         return collate
 

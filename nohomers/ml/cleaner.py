@@ -14,6 +14,9 @@ import json
 import copy
 from multiprocessing.pool import ThreadPool
 from typing import List
+import torch.nn as nn
+import torch.nn.functional as F
+from sklearn import metrics
 
 _input_size = 224
 _train_transforms = torchvision.transforms.Compose([
@@ -57,13 +60,45 @@ def make_train_test_datasets(examples: List[SimpleVisionExample]):
     return train_dataset, test_dataset
 
 
-def train_cleaner(train_dataset, eval_dataset, batch_size=50, num_epochs=5, device="cuda:0", lr=0.001, l2_reg=0.005, clip_norm=0.5, workers=10):
-    model_ft = torchvision.models.resnet50(pretrained=True)
-    num_ftrs = model_ft.fc.in_features
-    model_ft.fc = torch.nn.Linear(num_ftrs, 2)
-    model_ft = model_ft.to(device)
+class VisionOnlyCleaner(nn.Module):
+    def __init__(self, latent_dim=None):
+        super().__init__()
+        self.model_ft = torchvision.models.resnet50(pretrained=True)
+        for param in self.model_ft.parameters():
+            param.requires_grad = False
+        num_ftrs = self.model_ft.fc.in_features
+        self.model_ft.fc = torch.nn.Linear(num_ftrs, 2)
 
-    optimizer_ft = torch.optim.Adam(model_ft.fc.parameters(), lr=lr, weight_decay=l2_reg)
+    def forward(self, x, latent):
+        return self.model_ft.forward(x)
+
+
+class VisionLatentCleaner(nn.Module):
+    def __init__(self, latent_dim, freeze_resnet=True):
+        super().__init__()
+        self.model_ft = torchvision.models.resnet50(pretrained=True)
+        if freeze_resnet:
+            for param in self.model_ft.parameters():
+                param.requires_grad = False
+
+        num_ft_features = self.model_ft.fc.in_features
+        self.model_ft.fc = torch.nn.Identity()
+
+        self.extended_model = torch.nn.Sequential(
+            torch.nn.Linear(num_ft_features + latent_dim, 64),
+            torch.nn.ReLU(),
+            torch.nn.Linear(64, 32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(32, 2),
+        )
+
+    def forward(self, x, latent):
+        resnet_out = self.model_ft.forward(x)
+        to_input = torch.hstack((resnet_out, latent))
+        return self.extended_model(to_input)
+
+def train_cleaner(model, train_dataset, eval_dataset, batch_size=50, num_epochs=5, device="cuda:0", lr=0.001, l2_reg=0.005, clip_norm=0.5, workers=10):
+    optimizer_ft = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=l2_reg)
     train_dataloader = DataLoader(
         train_dataset, num_workers=workers, batch_size=batch_size, pin_memory=True, collate_fn=train_dataset.collate_fn,
     )
@@ -72,68 +107,86 @@ def train_cleaner(train_dataset, eval_dataset, batch_size=50, num_epochs=5, devi
     )
 
     best_epoch = None
-    best_eval_loss = None
+    best_eval_auc = None
     best_eval_state = None
 
     def forward(batch):
-        batch, labels = batch
-        batch = batch.to(device)
+        x, latents, labels = batch
+        x = x.to(device)
+        latents = latents.to(device)
         labels = labels.to(device)
-        ret = model_ft(batch)
+        ret = model(x, latents)
         loss = torch.nn.CrossEntropyLoss()(ret, labels)
+        with torch.no_grad():
+            probs = torch.nn.Softmax(dim=1)(ret)[:, 1]
         
-        return loss
+        return loss, probs
 
     for epoch_num in tqdm(range(num_epochs), "Epoch"):
         optimizer_ft.zero_grad()
         train_loss = 0
         train_size = 0
+        train_labs = []
+        train_probs = []
         for i, batch in tqdm(enumerate(train_dataloader), "Train Batch"):
             train_size += batch[0].size(0)
-            model_ft.train()
-            loss = forward(batch)
+            model.train()
+            loss, batch_probs = forward(batch)
+            train_probs.extend(batch_probs.cpu().numpy().tolist())
+            train_labs.extend(batch[-1].cpu().numpy().tolist())
             loss.backward()
             train_loss += loss
 
             if clip_norm:
-                torch.nn.utils.clip_grad_norm_(model_ft.parameters(), clip_norm)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
             optimizer_ft.step()
             optimizer_ft.zero_grad()
         
         train_loss /= train_size
+        fpr, tpr, _ = metrics.roc_curve(train_labs, train_probs, pos_label=1)
+        train_auc = metrics.auc(fpr, tpr)
 
         with torch.no_grad():
-            model_ft.eval()
+            model.eval()
             eval_loss = 0
             eval_size = 0
+
+            eval_labs = []
+            eval_probs = []
+
             for i, batch in enumerate(eval_dataloader):
                 eval_size += batch[0].size(0)
-                eval_loss += forward(batch)
+                batch_loss, batch_probs = forward(batch)
+                eval_probs.extend(batch_probs.cpu().numpy().tolist())
+                eval_labs.extend(batch[-1].cpu().numpy().tolist())
+                eval_loss += batch_loss
 
             eval_loss /= eval_size
+
+            fpr, tpr, _ = metrics.roc_curve(eval_labs, eval_probs, pos_label=1)
+            eval_auc = metrics.auc(fpr, tpr)
                 
-            if best_eval_loss is None or eval_loss < best_eval_loss:
-                best_eval_loss = eval_loss 
-                best_eval_state = copy.copy(model_ft.state_dict())
+            if best_eval_auc is None or eval_auc > best_eval_auc:
+                best_eval_auc = eval_auc
+                best_eval_state = copy.copy(model.state_dict())
                 best_epoch = epoch_num
         
-        print(f"Epoch {epoch_num}: train_loss={train_loss:.3f}, eval_loss={eval_loss:.3f}")
+        print(f"Epoch {epoch_num}: train_loss={train_loss:.3f}, train_auc={train_auc:.3f}, eval_loss={eval_loss:.3f}, eval_auc={eval_auc:.3f}")
     
-    print(f"Loading best eval {best_eval_loss} from epoch {best_epoch}")
-    model_ft.load_state_dict(best_eval_state)
+    print(f"Loading best eval auc {best_eval_auc} from epoch {best_epoch}")
+    model.load_state_dict(best_eval_state)
 
-    return model_ft
 
-def scores_for_images(cleaner, images):
+@torch.no_grad()
+def scores_for_images(cleaner, images, latents):
     batch = make_network_input_from_images(images).cuda()
-    batch_scores = cleaner.forward(batch)
+    latent_batch = torch.vstack(latents).cuda()
+    batch_scores = cleaner.forward(batch, latent_batch)
     probs = torch.nn.Softmax(dim=1)(batch_scores)
     return [p[1].item() for p in probs]
 
-def load_cleaner(path, device="cuda:0"):
-    model = torchvision.models.resnet50(pretrained=True)
-    num_ftrs = model.fc.in_features
-    model.fc = torch.nn.Linear(num_ftrs, 2)
+def load_cleaner(path, device="cuda:0", klass=VisionLatentCleaner, latent_dim=None):
+    model = klass(latent_dim=latent_dim)
     model.load_state_dict(torch.load(path))
     model.eval()
     return model.to(device)

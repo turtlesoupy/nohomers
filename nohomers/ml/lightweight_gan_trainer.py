@@ -157,19 +157,28 @@ def get_trainer(
 
 
 @torch.no_grad()
-def generate_images(trainer, num=1):
+def generate_images(trainer, num=1, pool=None):
+    generated_images, latents = generate_image_tensors(trainer=trainer, num=num)
+    generated_images = generated_images.cpu()
+    if pool:
+        pil_images = pool.map(transforms.ToPILImage(), [generated_images[i, :, :, :] for i in range(num)])
+    else:
+        pil_images = [transforms.ToPILImage()(generated_images[i, :, :, :]) for i in range(num)]
+        
+    return list(
+        GeneratedImage(image=pil_images[i], latents=latents[i, :])
+        for i in range(num)
+    )
+
+
+@torch.no_grad()
+def generate_image_tensors(trainer, num=1):
     trainer.GAN.eval()
     latent_dim = trainer.GAN.latent_dim
     image_size = trainer.GAN.image_size
     latents = torch.randn((num, latent_dim)).cuda(trainer.rank)
     generated_images = trainer.generate_truncated(trainer.GAN.GE, latents)
-    return list(
-        GeneratedImage(
-            image=transforms.ToPILImage()(generated_images[i, :, :, :].cpu()),
-            latents=latents[i, :],
-        )
-        for i in range(num)
-    )
+    return generated_images, latents
 
 
 @torch.no_grad()
@@ -236,10 +245,10 @@ def gen_images_and_manifest(trainer, output_base_dir, num=10, batch_size=100, cl
     pbar = tqdm(total=num)
     with ThreadPool(32) as pool:
         while len(image_objects) < num:
-            images = list(generate_images(trainer, num=batch_size))
+            images = list(generate_images(trainer, num=batch_size, pool=pool))
             if cleaner and clean_threshold:
                 scores = scores_for_images(
-                    cleaner, [image.image for image in images])
+                    cleaner, [image.image for image in images], [image.latents for image in images])
                 images = [
                     im for im, score in zip(images, scores)
                     if score > clean_threshold

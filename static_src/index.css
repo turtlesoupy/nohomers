@@ -76,7 +76,7 @@ a.disabled, a.disabled:visited, a.disabled:hover {
   -ms-transform: translateX(-50%);
   transform: translateX(-50%);
   z-index: 0;
-  filter: contrast(120%) brightness(100%);
+  filter: contrast(120%) brightness(105%);
 }
 
 .attribution-wrapper {
