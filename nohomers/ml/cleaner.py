@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torchvision
 import pydash as py_
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from uuid import uuid4
 from PIL import Image
 from pathlib import Path

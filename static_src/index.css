@@ -53,7 +53,6 @@ a.disabled, a.disabled:visited, a.disabled:hover {
   text-align: center;
   margin: 0;
   padding: 0;
-  filter: contrast(120%) brightness(100%);
 }
 
 .image-payload {
@@ -65,6 +64,7 @@ a.disabled, a.disabled:visited, a.disabled:hover {
   -ms-transform: translateX(-50%);
   transform: translateX(-50%);
   z-index: 1;
+  filter: contrast(120%) brightness(105%);
 }
 
 .transition-video-payload {
@@ -76,6 +76,7 @@ a.disabled, a.disabled:visited, a.disabled:hover {
   -ms-transform: translateX(-50%);
   transform: translateX(-50%);
   z-index: 0;
+  filter: contrast(120%) brightness(100%);
 }
 
 .attribution-wrapper {

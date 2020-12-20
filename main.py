@@ -39,7 +39,7 @@ if __name__ == "__main__":
         action=EnvDefault,
         env_var="MANIFEST_PATH",
         help="Manifest path location",
-        default="./static/manifest.json",
+        default="./resources/simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-35-p100.manifest.json",
     )
 
     parser.add_argument(
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         action=EnvDefault,
         env_var="MANIFEST_DIR_URL",
         help="HTTP(s) path for manifest dir",
-        default="https://static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augnormal04",
+        default="https://static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-35-p100",
     )
 
     parser.add_argument(
