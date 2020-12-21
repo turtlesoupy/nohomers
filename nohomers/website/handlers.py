@@ -114,9 +114,10 @@ class Handlers:
             web.get(r"/item/{key:[^/]+}", self.item),
         ]
 
-    def __init__(self, content_index:ContentIndex, base_url: str):
+    def __init__(self, content_index: ContentIndex, base_url: str, static_cdn_url_base: str):
         self.content_index = content_index
         self.base_url = base_url
+        self.static_cdn_url_base = static_cdn_url_base
 
     async def on_startup(self, app):
         pass
@@ -135,7 +136,6 @@ class Handlers:
 
     async def favicon(self, request):
         return web.FileResponse("./static/favicons/favicon.ico")
-
 
     @aiohttp_jinja2.template("index.jinja2")
     async def index(self, request):
@@ -156,7 +156,7 @@ class Handlers:
         else:
             display_item = self.content_index.random_item()
             is_root_request = True
-            og_image_url = "https://static.thisfuckeduphomerdoesnotexist.com/site_content/og_image.jpg"
+            og_image_url = "https://static.thisfuckeduphomerdoesnotexist.com/site_content/opengraph_image.png"
             og_url = self.base_url
 
         return {
@@ -164,4 +164,5 @@ class Handlers:
             "og_url": og_url,
             "og_image_url": og_image_url,
             "is_root_request": is_root_request,
+            "static_cdn_url_base":  self.static_cdn_url_base,
         }

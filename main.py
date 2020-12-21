@@ -1,5 +1,6 @@
 from aioapns import APNs
 from aiohttp import web
+import json
 import argparse
 import logging
 from nohomers.website.app import app
@@ -39,7 +40,7 @@ if __name__ == "__main__":
         action=EnvDefault,
         env_var="MANIFEST_PATH",
         help="Manifest path location",
-        default="./resources/simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-35-p100.manifest.json",
+        default="./resources/simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-40-p88.manifest.json",
     )
 
     parser.add_argument(
@@ -48,7 +49,7 @@ if __name__ == "__main__":
         action=EnvDefault,
         env_var="MANIFEST_DIR_URL",
         help="HTTP(s) path for manifest dir",
-        default="https://static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-35-p100",
+        default="https://static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-40-p88",
     )
 
     parser.add_argument(
@@ -60,12 +61,15 @@ if __name__ == "__main__":
         default="https://www.thisfuckeduphomerdoesnotexist.com",
     )
 
+    with open("./resources/static_cdn_urls.json", "r") as f:
+        static_cdn_url_base = f"//{json.load(f)['static_cdn_url_base']}"
+
     args = parser.parse_args()
 
     lvl = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=lvl)
 
     content_index = ContentIndex(args.manifest_path, args.manifest_dir_url)
-    handlers = Handlers(content_index=content_index, base_url=args.base_url)
+    handlers = Handlers(content_index=content_index, base_url=args.base_url, static_cdn_url_base=static_cdn_url_base)
     my_app = app(handlers)
     web.run_app(app(handlers), port=args.port)

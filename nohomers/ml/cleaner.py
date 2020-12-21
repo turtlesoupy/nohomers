@@ -45,6 +45,11 @@ def make_network_input_from_images(images: List[Image.Image]) -> torch.Tensor:
     batch = default_collate(image_tensors)
     return batch
 
+def make_network_input_from_image_tensor(image_tensor):
+    return torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(
+        torchvision.transforms.functional.resize(image_tensor, (_input_size, _input_size), interpolation=Image.BICUBIC)
+    )
+
 
 def make_train_test_datasets(examples: List[SimpleVisionExample]):
     train_dataset, _, test_dataset = [
@@ -178,12 +183,13 @@ def train_cleaner(model, train_dataset, eval_dataset, batch_size=50, num_epochs=
 
 
 @torch.no_grad()
-def scores_for_images(cleaner, images, latents):
-    batch = make_network_input_from_images(images).cuda()
-    latent_batch = torch.vstack(latents).cuda()
+def scores_for_image_tensors(cleaner, image_tensor, latent_tensor):
+    batch = make_network_input_from_image_tensor(image_tensor).cuda()
+    latent_batch = latent_tensor.cuda()
     batch_scores = cleaner.forward(batch, latent_batch)
     probs = torch.nn.Softmax(dim=1)(batch_scores)
-    return [p[1].item() for p in probs]
+
+    return probs[:, 1]
 
 def load_cleaner(path, device="cuda:0", klass=VisionLatentCleaner, latent_dim=None):
     model = klass(latent_dim=latent_dim)

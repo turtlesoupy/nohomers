@@ -1,11 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
+import time
 from threading import BoundedSemaphore
 from tqdm.auto import tqdm
 from multiprocessing.pool import ThreadPool
 import torch
 import json
 from pathlib import Path
-from .cleaner import scores_for_images
+from .cleaner import scores_for_image_tensors
 from lightweight_gan import Trainer
 from lightweight_gan.lightweight_gan import slerp
 from uuid import uuid4
@@ -16,9 +17,9 @@ import numpy as np
 import copy
 import random
 from dataclasses import dataclass, field
-import ffmpeg
 from typing import List
 import pydash as py_
+import imageio
 
 
 @dataclass
@@ -158,13 +159,16 @@ def get_trainer(
 
 @torch.no_grad()
 def generate_images(trainer, num=1, pool=None):
-    generated_images, latents = generate_image_tensors(trainer=trainer, num=num)
+    generated_images, latents = generate_image_tensors(
+        trainer=trainer, num=num)
     generated_images = generated_images.cpu()
     if pool:
-        pil_images = pool.map(transforms.ToPILImage(), [generated_images[i, :, :, :] for i in range(num)])
+        pil_images = pool.map(transforms.ToPILImage(), [
+                              generated_images[i, :, :, :] for i in range(num)])
     else:
-        pil_images = [transforms.ToPILImage()(generated_images[i, :, :, :]) for i in range(num)]
-        
+        pil_images = [transforms.ToPILImage()(generated_images[i, :, :, :])
+                      for i in range(num)]
+
     return list(
         GeneratedImage(image=pil_images[i], latents=latents[i, :])
         for i in range(num)
@@ -200,7 +204,8 @@ def generate_interpolation_frames(trainer, latents_low, latents_high, num_frames
     latents_low = latents_low.unsqueeze(0)
     latents_high = latents_high.unsqueeze(0)
 
-    ret = []
+    ret = None
+
     for i, chunk_ratios in enumerate(chunks):
         batch_latents = []
         for j, ratio in enumerate(chunk_ratios):
@@ -215,26 +220,18 @@ def generate_interpolation_frames(trainer, latents_low, latents_high, num_frames
         stacked_latents = torch.vstack(batch_latents).to(device)
         generated_images = trainer.generate_truncated(
             trainer.GAN.GE, stacked_latents).cpu()
-        
-        for b in range(chunk_ratios.size(0)):
-            ret.append(generated_images[b, :, :, :])
+
+        if ret is None:
+            ret = generated_images
+        else:
+            ret = ret.stack(generated_images, axis=0)
 
     return ret
 
 
 def frames_to_video(frames, output_path, fps=30, bitrate="1M"):
-    with tempfile.TemporaryDirectory() as td:
-        for i, frame in enumerate(frames):
-            img = transforms.ToPILImage()(frame)
-            img.save(Path(td) / f"{i:06d}.jpg")
-
-        (
-            ffmpeg
-            .input(f'{td}/*.jpg', pattern_type='glob', framerate=fps)
-            .output(filename=output_path, video_bitrate=bitrate, preset="fast")
-            .overwrite_output()
-            .run()
-        )
+    to_write = (frames * 255).permute(0, 2, 3, 1).to(torch.uint8).numpy()
+    imageio.mimwrite(str(output_path), to_write, fps=fps, bitrate="1M")
 
 
 def gen_images_and_manifest(trainer, output_base_dir, num=10, batch_size=100, cleaner=None, clean_threshold=None):
@@ -245,25 +242,42 @@ def gen_images_and_manifest(trainer, output_base_dir, num=10, batch_size=100, cl
     pbar = tqdm(total=num)
     with ThreadPool(32) as pool:
         while len(image_objects) < num:
-            images = list(generate_images(trainer, num=batch_size, pool=pool))
-            if cleaner and clean_threshold:
-                scores = scores_for_images(
-                    cleaner, [image.image for image in images], [image.latents for image in images])
-                images = [
-                    im for im, score in zip(images, scores)
-                    if score > clean_threshold
-                ]
+            image_tensors, latents = generate_image_tensors(
+                trainer, num=batch_size)
+            n = image_tensors.size(0)
+            non_uniform = (image_tensors.view(n, 3, -1).std(2).mean(1) > 0.005)
+            image_tensors = image_tensors[non_uniform]
+            latents = latents[non_uniform]
+            if image_tensors.size(0) == 0:
+                continue
 
-            def save_and_return(image):
+            if cleaner and clean_threshold:
+                scores = scores_for_image_tensors(
+                    cleaner, image_tensors, latents)
+                image_tensors = image_tensors[scores > clean_threshold]
+                latents = latents[scores > clean_threshold]
+                scores = None
+
+            if image_tensors.size(0) == 0:
+                continue
+
+            latents = latents.cpu()
+            image_tensors = image_tensors.cpu()
+
+            def save_and_return(i):
+                image_tensor = image_tensors[i, :]
+                latent = latents[i, :]
+                image = transforms.ToPILImage()(image_tensor)
                 name = f"{uuid4()}.jpg"
-                image.image.save(str(image_output_dir / name))
+                image.save(str(image_output_dir / name))
                 return GeneratedRef(
                     name=name,
-                    latents=image.latents.cpu().numpy(),
+                    latents=latent.numpy(),
                 )
 
-            image_objects.extend(list(pool.imap(save_and_return, images)))
-            pbar.update(len(images))
+            image_objects.extend(
+                list(pool.imap(save_and_return, range(image_tensors.size(0)))))
+            pbar.update(image_tensors.size(0))
 
     pbar.close()
 
@@ -303,13 +317,15 @@ class BoundedExecutor:
 
 @torch.no_grad()
 def gen_interpolation_videos(
-    trainer,
-    images: List[GeneratedRef],
-    output_base_dir,
-    per_edge=1,
-    video_duration=2.0,
-    video_fps=30,
-    batch_size=100,
+        trainer,
+        images: List[GeneratedRef],
+        output_base_dir,
+        per_edge=1,
+        video_duration=2.0,
+        video_fps=30,
+        batch_size=100,
+        manifest_save_path=None,
+        save_every=None,
 ) -> List[GeneratedRefWithTransitions]:
     assert len(images) > per_edge
 
@@ -319,7 +335,7 @@ def gen_interpolation_videos(
     videos_path.mkdir(exist_ok=True)
 
     ret = []
-    executor = BoundedExecutor(100, 10)
+    executor = BoundedExecutor(128, 16)
     for src_i, src in enumerate(tqdm(images)):
         dest_set = set()
         while len(dest_set) < per_edge:
@@ -352,7 +368,6 @@ def gen_interpolation_videos(
                 fps=video_fps,
                 bitrate="1M"
             )
-            # frames_to_video(video_frames, output_path=videos_path / video_name, fps=video_fps, bitrate="1M")
 
             transitions.append(
                 GeneratedTransition(
@@ -367,6 +382,16 @@ def gen_interpolation_videos(
             transitions=transitions,
         ))
 
+        if save_every and manifest_save_path and len(ret) % save_every == 0:
+            with open(manifest_save_path, "w") as f:
+                json.dump([e.to_dict() for e in ret], f)
+
+
+
     executor.shutdown(wait=True)
+
+    if manifest_save_path:
+        with open(manifest_save_path, "w") as f:
+            json.dump([e.to_dict() for e in ret], f)
 
     return ret

@@ -5,6 +5,8 @@ body {
   letter-spacing: 0.021em;
   font-display: swap;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 a {
@@ -31,11 +33,12 @@ a.disabled, a.disabled:visited, a.disabled:hover {
 }
 
 .site-wrapper {
-    /* width: 550px;
-    margin: auto;
-    */
     margin: 0;
     padding: 0;
+    background-color: white;
+    width: 100vw;
+    height: 100vh;
+    filter: contrast(120%);
 }
 
 .copy-a {
@@ -64,7 +67,6 @@ a.disabled, a.disabled:visited, a.disabled:hover {
   -ms-transform: translateX(-50%);
   transform: translateX(-50%);
   z-index: 1;
-  filter: contrast(120%) brightness(105%);
 }
 
 .transition-video-payload {
@@ -76,7 +78,6 @@ a.disabled, a.disabled:visited, a.disabled:hover {
   -ms-transform: translateX(-50%);
   transform: translateX(-50%);
   z-index: 0;
-  filter: contrast(120%) brightness(105%);
 }
 
 .attribution-wrapper {

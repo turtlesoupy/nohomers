@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+
+from pathlib import Path
+from uuid import uuid4
+import json
+import subprocess
+import time
+
+build_root = Path(__file__).parent.parent
+static_root = build_root / "static"
+asset_file  = build_root / "resources/static_cdn_urls.json"
+gcloud_bucket = "gs://nohomers-static"
+asset_subfolder = f"/site-deploy/{uuid4()}"
+cdn_url_base = f"static.thisfuckeduphomerdoesnotexist.com{asset_subfolder}"
+
+print("Building static assets")
+subprocess.run("npm run build", shell=True, check=True, cwd=build_root)
+
+print("Uploading to google cloud")
+subprocess.run(f"gsutil -m cp -r * {gcloud_bucket}{asset_subfolder}/", shell=True, check=True, cwd=static_root)
+
+print("Done... writing asset file")
+with open(asset_file, "w") as f:
+    json.dump({
+        "static_cdn_url_base": cdn_url_base
+    }, f)
