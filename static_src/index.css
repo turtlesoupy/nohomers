@@ -89,7 +89,7 @@ a.disabled, a.disabled:visited, a.disabled:hover {
 
 .attribution {
    font-size: small;
-   color: rgba(0, 0, 0, 0.25);
+   color: rgba(0, 0, 0, 0.3);
    z-index: 1;
    text-align: left;
    margin-left: auto;

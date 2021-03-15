@@ -9,6 +9,7 @@ interface ContentItem {
     next_item_url: string,
     transition_url: string,
     permalink: string,
+    opensea_item_url?: string,
 }
 
 declare var currentContentItem: ContentItem;
@@ -27,6 +28,8 @@ window.addEventListener('load', (event) => {
     var imageLink = document.getElementById("display-link") as HTMLLinkElement;
     var copyElement = document.getElementById("copy-a") as HTMLLinkElement;
     var twitterElement = document.getElementById("tweet-a") as HTMLLinkElement;
+    var cryptoLink = document.getElementById("asset-crypto-url") as HTMLLinkElement;
+    var cryptoLinkSection = document.getElementById("asset-crypto-section") as HTMLLinkElement;
 
     copyElement.setAttribute("href", currentContentItem.permalink);
 
@@ -40,6 +43,14 @@ window.addEventListener('load', (event) => {
         twitterElement.setAttribute("href",
             `https://twitter.com/intent/tweet?url=${encodeURIComponent(copyElement.href)}`
         );
+
+        if (ci.opensea_item_url) {
+            cryptoLinkSection.style.display = "";
+            cryptoLink.setAttribute("href", ci.opensea_item_url);
+        } else {
+            cryptoLinkSection.style.display = "none";
+            cryptoLink.setAttribute("href", "#"); 
+        }
     }
 
     function assignNext() {

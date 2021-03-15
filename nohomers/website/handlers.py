@@ -38,6 +38,8 @@ class ContentItem:
     next_item_url: Optional[str]
     transition_url: Optional[str]
 
+    opensea_item_url: Optional[str]
+
     def to_dict(self):
         return {
             "url": self.url,
@@ -46,6 +48,7 @@ class ContentItem:
             "next_item_url": self.next_item_url,
             "transition_url": self.transition_url,
             "permalink": self.permalink,
+            "opensea_item_url": self.opensea_item_url,
         }
     
     @property
@@ -57,7 +60,7 @@ class ContentIndex:
     def __init__(self, manifest_path: Path, manifest_dir_url: str, permalink_key="p"):
         with open(manifest_path, "r") as f:
             self.manifest = json.load(f)
-
+        
         self.permalink_key = permalink_key
         self.manifest_dir_url = manifest_dir_url
         self.manifest_by_key = {
@@ -91,6 +94,7 @@ class ContentIndex:
             next_item_key=next_item_key,
             next_item_url=next_item_url,
             transition_url=transition_url,
+            opensea_item_url=item.get("opensea_url"),
         )
     
     def item_for_key(self, key) -> ContentItem:

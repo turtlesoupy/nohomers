@@ -13,7 +13,7 @@ import copy
 def _dev_handlers():
     logging.basicConfig(level=logging.INFO)
     content_index = ContentIndex(
-        manifest_path=Path(__file__).parent.parent.parent / "resources" / "simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-40-p88.manifest.json",
+        manifest_path=Path(__file__).parent.parent.parent / "resources" / "opensea_partial_simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-40-p88.manifest.json",
         manifest_dir_url="https://static.thisfuckeduphomerdoesnotexist.com/simpsons_large_cleaned_nobackground_1024_augall03_sle_res64-40-p88",
     )
     return Handlers(

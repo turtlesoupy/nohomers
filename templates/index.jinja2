@@ -68,8 +68,15 @@
               <div class="attribution-section">
                 <a href="/" id="next-button" class="next-button">Another One</a>
               </div>
+              <div class="attribution-section" 
+                   id="asset-crypto-section" 
+                   style='{{"display: none;" if display_item.opensea_item_url is none else ""}}'>
+                <a href="{{display_item.opensea_item_url}}" id="asset-crypto-url">
+                  &#129297;&#129297;&#129297; Own this on the blockchain &#128184;&#128184;&#128184;
+                </a>
+              </div>
               <div class="attribution-section">
-                This Fucked Up Homer Does Not Exist
+                  ...or you can <a href="https://www.buymeacoffee.com/turtlesoupy">buy me a coffee</a>
               </div>
               <div class="attribution-section">
                   Created by <a href="https://www.thomasdimson.com">Thomas Dimson</a> (<a href="https://twitter.com/turtlesoupy">@turtlesoupy</a>)
@@ -81,9 +88,6 @@
                   from <a href="https://github.com/lucidrains/lightweight-gan">lucidrains</a>
               </div>
 
-              <div class="attribution-section">
-                  You can <a href="https://www.buymeacoffee.com/turtlesoupy">buy me a coffee</a>
-              </div>
               <div class="attribution-section"> 
                 <a id="tweet-a" class="darken" href="https://twitter.com/intent/tweet?url={{og_url|quote_plus}}">
                   <img 
